@@ -52,6 +52,21 @@
 check-updates: true
 version: 3.7.0
 
+# Optional one-interaction SMP entry. Set the actual proxy server name before enabling.
+# Existing server selector remains available. A reserved/occupied slot is never replaced.
+start_survival:
+  enabled: false
+  server: ""
+  slot: 4
+  select_on_join: true
+  item:
+    material: GRASS_BLOCK
+    amount: 1
+    display_name: "&a&lStart Survival &7(Use item)"
+    lore:
+      - "&7Find wilderness, build a home."
+      - "&7Use this item to join the SMP."
+
 # If you use multiple worlds set this to true
 multiple_worlds: false
 

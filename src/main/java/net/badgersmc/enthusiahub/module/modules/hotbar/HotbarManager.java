@@ -68,7 +68,23 @@ public class HotbarManager extends Module {
 			registerHotbarItem(playerHider);
 		}
 
+        SurvivalEntrySettings entry = SurvivalEntrySettings.read(config);
+        if (entry != null) {
+            var section = config.getConfigurationSection("start_survival.item");
+            if (section == null) {
+                var defaults = new org.bukkit.configuration.file.YamlConfiguration();
+                section = defaults.createSection("item");
+                section.set("material", "GRASS_BLOCK");
+                section.set("display_name", "&a&lStart Survival &7(Use item)");
+                section.set("lore", List.of("&7Find wilderness, build a home.", "&7Use this item to join the SMP."));
+            }
+            registerHotbarItem(new net.badgersmc.enthusiahub.module.modules.hotbar.items.StartSurvivalItem(
+                    this, ItemStackBuilder.getItemStack(section).build(), entry));
+        } else if (config.getBoolean("start_survival.enabled", false)) {
+            getPlugin().getLogger().warning("Start Survival disabled: invalid target/slot or a reserved hotbar slot.");
+        }
 		giveItems();
+
 	}
 
 	@Override
