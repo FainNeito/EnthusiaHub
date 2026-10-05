@@ -70,10 +70,21 @@ class PvPSwordItemTest {
                 verify(armorMeta, times(4)).setUnbreakable(true);
                 for (var stack : armor.constructed()) verify(stack).setItemMeta(armorMeta);
             }
+            var deferredRespawn = new AtomicReference<Runnable>();
+            when(scheduler.runTask(eq(plugin), any(Runnable.class))).thenAnswer(call -> {
+                deferredRespawn.set(call.getArgument(1)); return mock(BukkitTask.class);
+            });
+            var respawn = mock(org.bukkit.event.player.PlayerRespawnEvent.class);
+            when(respawn.getPlayer()).thenReturn(player);
+            item.onPlayerRespawn(respawn);
             item.onWorldExit(new PlayerChangedWorldEvent(player, mock(org.bukkit.World.class)));
             assertFalse(item.isInPvPMode(player));
             verify(player.getInventory()).setHelmet(null);
             verify(task).cancel();
+            try (var lateArmor = mockConstruction(ItemStack.class, (stack, context) -> when(stack.getItemMeta()).thenReturn(armorMeta))) {
+                deferredRespawn.get().run();
+                assertTrue(lateArmor.constructed().isEmpty(), "Deferred respawn must not restore gear after PvP/world exit");
+            }
         }
     }
 

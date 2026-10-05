@@ -355,7 +355,9 @@ public class PvPSwordItem extends HotbarItem {
 
         if (pvpMode.contains(player.getUniqueId())) {
             scheduler.runTask(getPlugin(), () -> {
-                if (player.isOnline() && !getHotbarManager().inDisabledWorld(player.getLocation())) applyArmor(player);
+                if (player.isOnline() && isInPvPMode(player)
+                        && !getHotbarManager().inDisabledWorld(player.getLocation())
+                        && !BuildMode.getInstance().isPresent(player.getUniqueId())) applyArmor(player);
             });
         }
     }

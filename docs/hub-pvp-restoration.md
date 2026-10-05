@@ -5,6 +5,7 @@
 - HUB-PVP-02: The hub shall allow melee and player projectile combat only between opted-in players; cancelled protection events and deluxehub.bypass.pvp minigame behavior shall remain intact.
 - HUB-PVP-03: The hub shall mark generated PvP swords and armor unbreakable and prevent durability damage to player gear in enabled hub worlds. PvP item protection shall remain active even if general durability protection is disabled.
 - HUB-PVP-04: The hub shall cancel countdowns and clear PvP state on quit/world exit/disable, preserve death/respawn settings, and respect disabled worlds and build mode.
+  Deferred respawn work shall not reapply PvP armor after the player leaves PvP or the module is shut down.
 - HUB-PVP-05: Existing MiniMessage and barrel/shelf protections from the local hub fixes shall be retained in the canonical source.
 
 ## Prove
@@ -32,5 +33,7 @@ Local verification: `gradle clean test shadowJar --console=plain`, Gradle 8.13/J
 CI workflow now runs the same Gradle build for PRs and master. Existing manual Maven/all-branches release workflow remains incompatible with this Gradle repository; do not use it for production. The documented canonical local build is the Gradle command above from a clean reviewed merged commit. PR exact-head checks/review results are recorded on GitHub.
 
 Delivery: https://github.com/BadgersMC/EnthusiaHub/pull/1 targets canonical master from FainNeito's fork because the connected account has pull/read permission only on BadgersMC/EnthusiaHub. All 12 local regression tests pass. Initial exact-head CI (9d3a0ca3a2623ba027c676897bd666002389895d, https://github.com/BadgersMC/EnthusiaHub/actions/runs/37267201592) returned `action_required`: a repository maintainer must approve the fork workflow before it can run. CodeRabbit reported a successful status but explicitly skipped reviewing this repository; that is not review approval. No human reviews are present. CI/review/merge remain pending.
+
+Follow-up review on 2026-10-05 reproduced a deferred respawn race: after scheduling armor restoration and leaving PvP/world, the callback recreated four armor pieces despite cleared membership. The strengthened lifecycle regression failed before the fix. Recheck membership, disabled-world status and build mode in the delayed callback so world exit/shutdown cannot restore gear afterwards. Rechecked canonical master (still 641891bccf946867dec722acd64cd3afb6177d1c), connector identity and browser account switcher: only FainNeito is available, with read permission on the canonical repository. Maintainer CI approval remains an external access gate.
 
 Production has not been modified or restarted. No live/client acceptance is claimed. After review/merge and deployment authorization: build from clean merged master, record commit/version/hash/checks, back up the active artifact/configuration, deploy and restart the hub, then test the configured slot/countdown, two-player combat, death/respawn, gear durability, and barrel/shelf denial with actual clients.
