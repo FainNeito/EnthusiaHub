@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'dev.strafbefehl'
-version = '3.7.2'
+version = '3.7.4'
 description = 'An all-in-one hub management system'
 
 repositories {
@@ -41,6 +41,16 @@ dependencies {
     }
     implementation 'co.aikar:acf-paper:0.5.1-SNAPSHOT'
     implementation 'net.kyori:adventure-api:4.21.0'
+    compileOnly 'net.kyori:adventure-text-minimessage:4.21.0'
+    compileOnly 'net.kyori:adventure-text-serializer-legacy:4.21.0'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testImplementation 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+    testImplementation 'org.mockito:mockito-core:5.14.2'
+    testImplementation 'net.kyori:adventure-text-minimessage:4.21.0'
+    testImplementation 'net.kyori:adventure-text-serializer-legacy:4.21.0'
+    testImplementation 'net.kyori:adventure-text-serializer-plain:4.21.0'
+    testImplementation 'net.md-5:bungeecord-chat:1.16-R0.1'
+    testImplementation 'com.google.guava:guava:33.3.1-jre'
 }
 
 tasks {
@@ -100,4 +110,8 @@ processResources {
     filesMatching('plugin.yml') {
         expand props
     }
+}
+
+test {
+    useJUnitPlatform()
 }

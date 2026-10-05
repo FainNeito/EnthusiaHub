@@ -8,12 +8,20 @@ import net.badgersmc.enthusiahub.cooldown.CooldownType;
 import net.badgersmc.enthusiahub.module.Module;
 import net.badgersmc.enthusiahub.module.ModuleType;
 import net.badgersmc.enthusiahub.module.modules.hologram.Hologram;
+import net.badgersmc.enthusiahub.module.modules.hotbar.PvPSwordModule;
 import net.badgersmc.enthusiahub.module.modules.player.PvPMode;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.DoubleChest;
+import org.bukkit.event.Event;
+import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.*;
 import org.bukkit.entity.minecart.CommandMinecart;
@@ -84,6 +92,7 @@ public class WorldProtect extends Module {
             Material.DAMAGED_ANVIL
     );
 
+    private boolean itemDurability;
     private boolean hungerLoss;
     private boolean fallDamage;
     private boolean weatherChange;
@@ -109,6 +118,7 @@ public class WorldProtect extends Module {
     @Override
     public void onEnable() {
         FileConfiguration config = getConfig(ConfigType.SETTINGS);
+        itemDurability = config.getBoolean("world_settings.disable_item_durability", true);
         hungerLoss = config.getBoolean("world_settings.disable_hunger_loss");
         fallDamage = config.getBoolean("world_settings.disable_fall_damage");
         playerPvP = config.getBoolean("world_settings.disable_player_pvp");
@@ -132,6 +142,54 @@ public class WorldProtect extends Module {
     public void onDisable() {
     }
 
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onItemDamage(PlayerItemDamageEvent event) {
+        if (!inDisabledWorld(event.getPlayer().getLocation()) && (itemDurability || isInHubPvP(event.getPlayer()))) {
+            event.setCancelled(true);
+        }
+    }
+
+    private boolean isInHubPvP(Player player) {
+        if (config.getBoolean("pvp_sword.enabled")) {
+            PvPSwordModule sword = (PvPSwordModule) getPlugin().getModuleManager().getModule(ModuleType.PVP_SWORD);
+            if (sword != null && sword.isInPvPMode(player)) return true;
+        }
+        if (config.getBoolean("pvp_mode.enabled")) {
+            PvPMode legacy = (PvPMode) getPlugin().getModuleManager().getModule(ModuleType.PVP_MODE);
+            return legacy != null && legacy.isPlayerInPvPMode(player.getUniqueId());
+        }
+        return false;
+    }
+
+    private boolean blocksContainer(Player player, Inventory inventory) {
+        if (!blockInteract || inDisabledWorld(player.getLocation())) return false;
+        if (!(inventory.getHolder() instanceof BlockState) && !(inventory.getHolder() instanceof DoubleChest)) return false;
+        if (BuildMode.getInstance().isPresent(player.getUniqueId())) return false;
+        return !config.getBoolean("legacySystems.permissionsEnabled")
+                || !player.hasPermission(Permissions.EVENT_BLOCK_INTERACT.getPermission());
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onContainerOpen(InventoryOpenEvent event) {
+        if (event.getPlayer() instanceof Player player && blocksContainer(player, event.getInventory())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onContainerClick(InventoryClickEvent event) {
+        if (event.getWhoClicked() instanceof Player player && blocksContainer(player, event.getView().getTopInventory())) {
+            // Includes shift-click, number-key swaps, offhand swaps and collect-to-cursor.
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
+    public void onContainerDrag(InventoryDragEvent event) {
+        if (event.getWhoClicked() instanceof Player player && blocksContainer(player, event.getView().getTopInventory())) {
+            event.setCancelled(true);
+        }
+    }
     // Prevent sign editing
     @EventHandler(priority = EventPriority.HIGH)
     public void onSignChange(SignChangeEvent event) {
@@ -209,7 +267,7 @@ public class WorldProtect extends Module {
         }
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onBlockInteract(PlayerInteractEvent event) {
         if (!blockInteract || inDisabledWorld(event.getPlayer().getLocation())) return;
 
@@ -223,9 +281,11 @@ public class WorldProtect extends Module {
 
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
             Material type = block.getType();
+            // Explicitly deny block use even when another handler permits the held item.
 
             // Check generic interactables first
-            if (interactables.contains(type)) {
+            if (block.getState() instanceof org.bukkit.inventory.InventoryHolder || interactables.contains(type)) {
+                event.setUseInteractedBlock(Event.Result.DENY);
                 event.setCancelled(true);
                 if (tryCooldown(player.getUniqueId(), CooldownType.BLOCK_INTERACT, 3)) {
                     Messages.EVENT_BLOCK_INTERACT.send(player);
@@ -347,7 +407,6 @@ public class WorldProtect extends Module {
         Player player = (Player) event.getEntity();
         if (inDisabledWorld(player.getLocation())) return;
         if (BuildMode.getInstance().isPresent(player.getUniqueId())) return;
-        PvPMode pvpMode = (PvPMode) getPlugin().getModuleManager().getModule(ModuleType.PVP_MODE);
         EntityDamageEvent.DamageCause cause = event.getCause();
         switch (cause) {
             case FALL:
@@ -358,9 +417,7 @@ public class WorldProtect extends Module {
                 break;
             case FIRE:
             case FIRE_TICK:
-                if (config.getBoolean("pvp_mode.enabled")) {
-                    if (pvpMode.isPlayerInPvPMode(player.getUniqueId())) return;
-                }
+                if (isInHubPvP(player)) return;
             case LAVA:
                 if (fireDamage) event.setCancelled(true);
                 break;
@@ -377,7 +434,7 @@ public class WorldProtect extends Module {
         }
     }
 
-    @EventHandler(priority = EventPriority.MONITOR)
+    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
     public void onEntityDamage(EntityDamageByEntityEvent event) {
         if (!playerPvP) return;
 
@@ -395,6 +452,16 @@ public class WorldProtect extends Module {
             Projectile proj = (Projectile) event.getDamager();
             if (proj.getShooter() instanceof Player
                     && ((Player) proj.getShooter()).hasPermission(Permissions.PVP_BYPASS.getPermission())) return;
+        }
+
+        if (config.getBoolean("pvp_sword.enabled")) {
+            Player attacker = event.getDamager() instanceof Player direct ? direct :
+                    event.getDamager() instanceof Projectile projectile && projectile.getShooter() instanceof Player shooter ? shooter : null;
+            if (attacker != null) {
+                PvPSwordModule sword = (PvPSwordModule) getPlugin().getModuleManager().getModule(ModuleType.PVP_SWORD);
+                if (sword == null || !sword.isInPvPMode(attacker) || !sword.isInPvPMode(victim)) event.setCancelled(true);
+                return;
+            }
         }
 
         if (event.getDamager() instanceof Player) {

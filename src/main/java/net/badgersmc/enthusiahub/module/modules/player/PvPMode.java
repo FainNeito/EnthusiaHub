@@ -99,7 +99,7 @@ public class PvPMode extends Module {
 								otherItemSection.set(entry.getKey(), entry.getValue());
 							}
 							ItemStack item = ItemStackBuilder.getItemStack(otherItemSection)
-									.addNamespacedKey(NamespacedKeys.Keys.PVP_MODE_ITEM.get(), PersistentDataType.BOOLEAN, true).build();
+									.addNamespacedKey(NamespacedKeys.Keys.PVP_MODE_ITEM.get(), PersistentDataType.BOOLEAN, true).setUnbreakable(true).build();
 							_items.get(type).add(item);
 						}
 					}
@@ -108,7 +108,7 @@ public class PvPMode extends Module {
 			}
 			List<ItemStack> itemList = new ArrayList<>();
 			itemList.add(ItemStackBuilder.getItemStack(section)
-				.addNamespacedKey(NamespacedKeys.Keys.PVP_MODE_ITEM.get(), PersistentDataType.BOOLEAN, true).build());
+				.addNamespacedKey(NamespacedKeys.Keys.PVP_MODE_ITEM.get(), PersistentDataType.BOOLEAN, true).setUnbreakable(true).build());
 			_items.put(type, itemList);
 		}
     }

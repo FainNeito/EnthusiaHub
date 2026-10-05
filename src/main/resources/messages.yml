@@ -97,3 +97,10 @@ Messages:
   TELEPORTATION_BOW:
     IN_COOLDOWN: "%prefix% &cYou must wait &e%time% seconds &cbefore using this again."
     MAX_DISTANCE_REACHED: "%prefix% &cMax distance reached. You can't teleport further."
+  PVP_SWORD:
+    COUNTDOWN_START_ENABLE: "%prefix% &aActivating PvP mode..."
+    COUNTDOWN_START_DISABLE: "%prefix% &cDeactivating PvP mode..."
+    PVP_ENABLED: "%prefix% &aYou are now in &c&lPvP Mode&a!"
+    PVP_DISABLED: "%prefix% &7You have left PvP mode."
+    ALREADY_COUNTING: "%prefix% &cYou're already switching modes! Wait for the countdown."
+    COUNTDOWN_CANCELLED: "%prefix% &cPvP mode switch cancelled!"

@@ -271,6 +271,7 @@ world_settings:
   # Blocks
   disable_block_break: true
   disable_block_place: true
+  disable_item_durability: true # Keep hub gear, tools and elytras from wearing out.
   disable_block_interact: true # Chest, furnace, crop tample, etc
   disable_block_burn: true
   disable_block_fire_spread: true
@@ -510,3 +511,66 @@ bedrock_menus:
   server_selector:
     enabled: true
     cache_form: true
+
+# Restored sword selector; leave the legacy pvp_mode option unchanged.
+pvp_sword:
+  enabled: false
+  slot: 2
+  disable_inventory_movement: true
+
+  # Sword item configuration
+  sword:
+    material: DIAMOND_SWORD
+    display_name: "&c&lPvP Sword"
+    lore:
+      - ""
+      - "&7Switch to this sword to enter PvP mode"
+      - "&7Wait 5 seconds to activate/deactivate"
+      - ""
+      - "&eOnly PvP players can damage each other!"
+    enchantments:
+      - SHARPNESS: 1
+    glow: true
+
+  # Countdown configuration
+  countdown:
+    duration: 5  # seconds
+    actionbar_format: "&c&lPvP Mode {action} in &f{time}s"
+    title_format: "&c{time}"
+    subtitle_format: "&7Switching to &c{action} &7mode"
+    sound:
+      enabled: true
+      tick_sound: "BLOCK_NOTE_BLOCK_HAT"
+      complete_sound: "ENTITY_PLAYER_LEVELUP"
+
+  # Armor configuration
+  armor:
+    helmet:
+      material: DIAMOND_HELMET
+      enchantments:
+        - "unbreaking:3"
+    chestplate:
+      material: DIAMOND_CHESTPLATE
+      enchantments:
+        - "unbreaking:3"
+    leggings:
+      material: DIAMOND_LEGGINGS
+      enchantments:
+        - "unbreaking:3"
+    boots:
+      material: DIAMOND_BOOTS
+      enchantments:
+        - "unbreaking:3"
+
+    # Random armor trim (1.20+)
+    random_trim: true
+
+  # Death effects
+  death:
+    lightning: true
+    knockback:
+      enabled: true
+      strength: 1.5
+      only_pvp_players: true
+    remove_items: true  # Don't drop items on PvP death
+    exit_pvp_mode: true  # Exit PvP mode on death

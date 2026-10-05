@@ -8,8 +8,12 @@ import net.badgersmc.enthusiahub.module.ModuleType;
 import net.badgersmc.enthusiahub.module.modules.hotbar.items.CustomItem;
 import net.badgersmc.enthusiahub.module.modules.hotbar.items.PlayerHider;
 import net.badgersmc.enthusiahub.utility.ItemStackBuilder;
+import net.badgersmc.enthusiahub.module.modules.hotbar.items.PvPSwordItem;
+import org.bukkit.event.HandlerList;
 import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -22,6 +26,7 @@ import java.util.Objects;
 public class HotbarManager extends Module {
 
 	private List<HotbarItem> hotbarItems;
+    private PvPSwordItem pvpSwordItem;
 	private int _joinSlot;
 
 	public HotbarManager(EnthusiaHubPlugin plugin) {
@@ -68,13 +73,48 @@ public class HotbarManager extends Module {
 			registerHotbarItem(playerHider);
 		}
 
-		giveItems();
+        if (config.getBoolean("pvp_sword.enabled")) {
+            ItemStack sword = ItemStackBuilder.getItemStack(compatibleSwordConfig(config.getConfigurationSection("pvp_sword.sword"))).build();
+            pvpSwordItem = new PvPSwordItem(this, sword, config.getInt("pvp_sword.slot", 2), "PVP_SWORD");
+            if (config.contains("pvp_sword.permission")) pvpSwordItem.setPermission(config.getString("pvp_sword.permission"));
+            pvpSwordItem.setAllowMovement(config.getBoolean("pvp_sword.disable_inventory_movement", true));
+            registerHotbarItem(pvpSwordItem);
+        }
+        giveItems();
 	}
 
 	@Override
 	public void onDisable() {
-		removeItems();
+        if (pvpSwordItem != null) pvpSwordItem.shutdown();
+        removeItems();
+        if (hotbarItems != null) hotbarItems.forEach(HandlerList::unregisterAll);
+        pvpSwordItem = null;
 	}
+
+    public PvPSwordItem getPvPSwordItem() { return pvpSwordItem; }
+
+    // Historical PvP configuration uses "SHARPNESS:1"; current hotbar builders use YAML maps.
+    static ConfigurationSection compatibleSwordConfig(ConfigurationSection source) {
+        Objects.requireNonNull(source, "Missing pvp_sword.sword configuration");
+        ConfigurationSection copy = new YamlConfiguration().createSection("sword", source.getValues(true));
+        List<?> entries = source.getList("enchantments");
+        if (entries != null) {
+            List<Object> normalized = new ArrayList<>();
+            for (Object entry : entries) {
+                if (entry instanceof String text) {
+                    int separator = text.lastIndexOf(':');
+                    if (separator <= 0) throw new IllegalArgumentException("Invalid PvP sword enchantment: " + text);
+                    java.util.LinkedHashMap<String, Integer> enchantment = new java.util.LinkedHashMap<>();
+                    enchantment.put(text.substring(0, separator).trim(), Integer.parseInt(text.substring(separator + 1).trim()));
+                    normalized.add(enchantment);
+                } else {
+                    normalized.add(entry);
+                }
+            }
+            copy.set("enchantments", normalized);
+        }
+        return copy;
+    }
 
 	public List<HotbarItem> getHotbarItems() {
 		return hotbarItems;

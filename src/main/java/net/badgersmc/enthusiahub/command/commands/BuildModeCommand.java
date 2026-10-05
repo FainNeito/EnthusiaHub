@@ -10,6 +10,7 @@ import net.badgersmc.enthusiahub.config.ConfigType;
 import net.badgersmc.enthusiahub.config.Messages;
 import net.badgersmc.enthusiahub.module.ModuleType;
 import net.badgersmc.enthusiahub.module.modules.player.PvPMode;
+import net.badgersmc.enthusiahub.module.modules.hotbar.PvPSwordModule;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -74,6 +75,11 @@ public class BuildModeCommand {
 			}
 		}
 
+        PvPSwordModule swordMode = (PvPSwordModule) plugin.getModuleManager().getModule(ModuleType.PVP_SWORD);
+        if (swordMode != null && swordMode.isInPvPMode(target)) {
+            Messages.BUILD_MODE_COMMAND_TARGET_IN_PVP_MODE.send(sender, "%target%", target.getDisplayName());
+            return;
+        }
 		if (bm.isPresent(target.getUniqueId())) {
 			remove(bm, target);
 			return;

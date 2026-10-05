@@ -9,6 +9,7 @@ import net.badgersmc.enthusiahub.module.modules.chat.ChatCommandBlock;
 import net.badgersmc.enthusiahub.module.modules.chat.ChatLock;
 import net.badgersmc.enthusiahub.module.modules.hologram.HologramManager;
 import net.badgersmc.enthusiahub.module.modules.hotbar.HotbarManager;
+import net.badgersmc.enthusiahub.module.modules.hotbar.PvPSwordModule;
 import net.badgersmc.enthusiahub.module.modules.player.*;
 import net.badgersmc.enthusiahub.module.modules.visual.scoreboard.ScoreboardManager;
 import net.badgersmc.enthusiahub.module.modules.visual.tablist.TablistManager;
@@ -66,6 +67,7 @@ public class ModuleManager {
 		registerModule(new CustomCommandHandler(plugin));
 		registerModule(new PlayerListener(plugin));
 		registerModule(new HotbarManager(plugin));
+        registerModule(new PvPSwordModule(plugin), "pvp_sword.enabled");
 		registerModule(new WorldProtect(plugin));
 		registerModule(new LobbySpawn(plugin));
 		registerModule(new PlayerVanish(plugin));
