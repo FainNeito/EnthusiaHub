@@ -5,6 +5,9 @@ import net.badgersmc.enthusiahub.module.modules.hotbar.HotbarItem;
 import net.badgersmc.enthusiahub.module.modules.hotbar.HotbarManager;
 import net.badgersmc.enthusiahub.module.modules.hotbar.SurvivalEntrySettings;
 import net.badgersmc.enthusiahub.module.modules.world.BuildMode;
+import net.badgersmc.enthusiahub.config.ConfigType;
+import net.badgersmc.enthusiahub.utility.TextUtil;
+import java.util.List;
 import org.bukkit.NamespacedKey;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -43,6 +46,24 @@ public final class StartSurvivalItem extends HotbarItem {
                 && !getHotbarManager().inDisabledWorld(player.getLocation())
                 && owned(player.getInventory().getItem(getSlot()))) {
             player.getInventory().setHeldItemSlot(getSlot());
+        }
+        welcomeFirstJoin(player);
+    }
+
+    private void welcomeFirstJoin(Player player) {
+        if (!player.isOnline() || player.hasPlayedBefore()
+                || BuildMode.getInstance().isPresent(player.getUniqueId())
+                || getHotbarManager().inDisabledWorld(player.getLocation())
+                || !owned(player.getInventory().getItem(getSlot()))) return;
+        var config = getHotbarManager().getConfig(ConfigType.SETTINGS);
+        if (config == null || !config.getBoolean("start_survival.welcome.enabled", false)) return;
+        var messages = config.contains("start_survival.welcome.messages")
+                ? config.getStringList("start_survival.welcome.messages")
+                : List.of("&a&lWelcome to Enthusia!",
+                        "&fFind a home, complete challenges and earn Raw Gold in Survival.",
+                        "&eSelect the Start Survival item and use it to join SMP.");
+        for (String message : messages) {
+            if (!message.isBlank()) player.sendMessage(TextUtil.color(message));
         }
     }
 

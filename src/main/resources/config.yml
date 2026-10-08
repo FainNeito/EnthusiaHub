@@ -59,6 +59,13 @@ start_survival:
   server: ""
   slot: 4
   select_on_join: true
+  # First Hub join only, after the actual owned entry is granted. No title override.
+  welcome:
+    enabled: false
+    messages:
+      - "&a&lWelcome to Enthusia!"
+      - "&fFind a home, complete challenges and earn Raw Gold in Survival."
+      - "&eSelect the Start Survival item and use it to join SMP."
   item:
     material: GRASS_BLOCK
     amount: 1
